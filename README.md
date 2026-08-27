@@ -40,9 +40,10 @@ git submodule update --init --recursive
 The installer will:
 
 1. Install `uv` (if missing).
-2. Install all Python dependencies.
-3. Run the interactive setup (asks for API key, base URL, workspace).
-4. Start the server (or show the menu).
+2. Remove old virtual environment.
+3. Install all Python dependencies (including the wrapper).
+4. Validate the code.
+5. Run the interactive setup (asks for API key, base URL, workspace).
 
 ### Docker Install (recommended for simplicity)
 
@@ -61,25 +62,26 @@ This starts **AnythingLLM** (official container) on port 3001 and **MSIM** on po
 After installation, run MSIM:
 
 ```
-python MSIM.py          # interactive menu
-python MSIM.py serve    # foreground server
-python MSIM.py start    # background daemon
-python MSIM.py stop     # stop daemon
-python MSIM.py status   # check status
-python MSIM.py logs     # view logs
-python MSIM.py install  # install as Windows service (NSSM)
-python MSIM.py uninstall # remove service
+uv run python MSIM.py          # interactive menu
+uv run python MSIM.py serve    # foreground server
+uv run python MSIM.py start    # background daemon
+uv run python MSIM.py stop     # stop daemon
+uv run python MSIM.py status   # check status
+uv run python MSIM.py logs     # view logs
+uv run python MSIM.py install  # install as Windows service (NSSM)
+uv run python MSIM.py uninstall # remove service
 ```
 
 ### Endpoints
 
-| Endpoint | Transport | Description |
+| Endpoint ↕▾ | Transport ↕▾ | Description ↕▾ |
 |---|---|---|
-| `POST /mcp` | HTTP | MCP JSON‑RPC (main) |
-| `GET /sse` | SSE | Server‑Sent Events |
-| `WS /ws` | WebSocket | WebSocket |
-| `GET /tools` | HTTP | Debug – list available tools |
-| `GET /health` | HTTP | Health check |
+| −`POST /mcp` | HTTP | MCP JSON‑RPC (main) |
+| −`GET /sse` | SSE | Server‑Sent Events |
+| −`WS /ws` | WebSocket | WebSocket |
+| −`GET /tools` | HTTP | Debug – list available tools |
+| −`GET /health` | HTTP | Health check |
+⚙
 
 ---
 
