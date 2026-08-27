@@ -36,16 +36,22 @@ if ! command -v uv &> /dev/null; then
     fi
 fi
 
-# Step 3: Install the wrapper manually (pip install)
-echo "Step 3: Installing AnythingLLM wrapper..."
-pip install ./submodules/anythingllm-mcp/
+# Step 3: Remove old virtual environment (if present)
+if [ -d ".venv" ]; then
+    echo "Removing old virtual environment..."
+    rm -rf .venv
+fi
 
-# Step 4: Install remaining Python dependencies
-echo "Step 4: Installing remaining dependencies..."
+# Step 4: Install Python dependencies
+echo "Step 4: Installing Python dependencies..."
 uv sync
 
-# Step 5: Validate MSIM.py
-echo "Step 5: Validating MSIM.py..."
+# Step 5: Install the wrapper manually (using uv pip)
+echo "Step 5: Installing AnythingLLM wrapper..."
+uv pip install ./submodules/anythingllm-mcp/
+
+# Step 6: Validate MSIM.py
+echo "Step 6: Validating MSIM.py..."
 python -m py_compile MSIM.py || {
     echo "MSIM.py appears corrupted. Downloading fresh copy..."
     curl -o MSIM.py https://raw.githubusercontent.com/giancbaring/msim/main/MSIM.py
@@ -55,8 +61,8 @@ python -m py_compile MSIM.py || {
     }
 }
 
-# Step 6: Run interactive setup
-echo "Step 6: Running interactive setup..."
+# Step 7: Run interactive setup
+echo "Step 7: Running interactive setup..."
 python MSIM.py
 
 echo "Installation complete."

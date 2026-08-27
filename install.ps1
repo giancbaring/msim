@@ -37,16 +37,22 @@ if (-not $uv) {
     }
 }
 
-# Step 3: Install the wrapper manually (pip install)
-Write-Host "Step 3: Installing AnythingLLM wrapper..." -ForegroundColor Cyan
-python -m pip install ./submodules/anythingllm-mcp/
+# Step 3: Remove old virtual environment (if present) to avoid conflicts
+if (Test-Path ".venv") {
+    Write-Host "Removing old virtual environment..." -ForegroundColor Yellow
+    rm -r .venv -Force
+}
 
-# Step 4: Install remaining Python dependencies
-Write-Host "Step 4: Installing remaining dependencies..." -ForegroundColor Cyan
+# Step 4: Install Python dependencies
+Write-Host "Step 4: Installing Python dependencies..." -ForegroundColor Cyan
 uv sync
 
-# Step 5: Validate MSIM.py
-Write-Host "Step 5: Validating MSIM.py..." -ForegroundColor Cyan
+# Step 5: Install the wrapper manually (using uv pip)
+Write-Host "Step 5: Installing AnythingLLM wrapper..." -ForegroundColor Cyan
+uv pip install ./submodules/anythingllm-mcp/
+
+# Step 6: Validate MSIM.py
+Write-Host "Step 6: Validating MSIM.py..." -ForegroundColor Cyan
 python -m py_compile MSIM.py
 if ($LASTEXITCODE -ne 0) {
     Write-Host "MSIM.py appears corrupted. Downloading fresh copy..." -ForegroundColor Yellow
@@ -58,8 +64,8 @@ if ($LASTEXITCODE -ne 0) {
     }
 }
 
-# Step 6: Run interactive setup
-Write-Host "Step 6: Running interactive setup..." -ForegroundColor Cyan
+# Step 7: Run interactive setup
+Write-Host "Step 7: Running interactive setup..." -ForegroundColor Cyan
 python MSIM.py
 
 Write-Host "Installation complete." -ForegroundColor Green
