@@ -93,8 +93,12 @@ Key variables:
 
 - `ANYTHINGLLM_BASE_URL` – default `http://localhost:3001`
 - `ANYTHINGLLM_API_KEY` – your Developer API Key
+- `MSIM_AUTH_TOKEN` – bearer token required by MSIM tool and transport endpoints
+- `CORS_ORIGINS` – comma-separated browser origins allowed to access MSIM
 - `WORKSPACE` – default workspace slug (auto‑detected if blank)
 - `PORT` – server port (default 8000)
+- `MSIM_HOST` – bind address (default `127.0.0.1`; Docker uses `0.0.0.0`)
+- `MSIM_ALLOW_LOCAL_FILE_UPLOAD` – explicitly enable local-file upload tools (default `false`)
 - `LOG_FORMAT` – `plain` or `json`
 - `SUPERVISE_MAX_RESTARTS` – max restarts per minute (supervisor mode)
 
@@ -104,8 +108,15 @@ Key variables:
 
 Feel free to open issues or pull requests on GitHub.
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) for MSIM contribution and security policies. The upstream `anythingllm-mcp` submodule has separate policies and attribution.
+
 ---
 
 ## License
 
-MIT – see LICENSE for details.
+The original MSIM work is released under the MIT License; see [LICENSE](LICENSE)
+for the complete terms and scope notice.
+
+The `submodules/anythingllm-mcp` directory is an independently licensed upstream
+project. Its copyright, license, and attribution terms remain in that directory
+and apply to that upstream code.
