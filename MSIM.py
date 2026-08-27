@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 MSIM – MCP Server Integration Manager
-Version: 1.0.6
+Version: 1.0.7
 """
 import sys
 import os
@@ -13,19 +13,22 @@ import logging
 import asyncio
 import signal
 import secrets
+import inspect
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional, Any, Dict
-from urllib.request import Request, urlopen
+from urllib.request import Request as UrlRequest, urlopen
 from urllib.error import URLError
 import getpass
+
+VERSION = "1.0.7"
 
 # ----------------------------------------------------------------------
 # Dependency Check
 # ----------------------------------------------------------------------
 try:
     import uvicorn
-    from fastapi import FastAPI, Depends, Header, HTTPException, Request, WebSocket, WebSocketDisconnect
+    from fastapi import FastAPI, Depends, Header, HTTPException, Request as FastAPIRequest, WebSocket, WebSocketDisconnect
     from fastapi.responses import JSONResponse
     from fastapi.middleware.cors import CORSMiddleware
     from dotenv import load_dotenv
@@ -119,7 +122,7 @@ def interactive_setup():
     print("\nTesting connection...")
     try:
         test_url = f"{base_url}/api/v1/workspaces"
-        req = Request(test_url, headers={"Authorization": f"Bearer {api_key}"})
+        req = UrlRequest(test_url, headers={"Authorization": f"Bearer {api_key}"})
         with urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode())
             workspaces = data.get("workspaces", [])
@@ -228,7 +231,7 @@ logger.addHandler(console_handler)
 # ----------------------------------------------------------------------
 def find_pid_on_port(port: int) -> Optional[int]:
     for conn in psutil.net_connections(kind="inet"):
-        if conn.laddr.port == port and conn.status == "LISTEN":
+        if getattr(conn.laddr, "port", None) == port and conn.status == "LISTEN":
             return conn.pid
     return None
 
@@ -291,7 +294,7 @@ except ImportError as e:
     logger.error("Make sure you ran 'git submodule update --init --recursive'")
     sys.exit(1)
 
-mcp_server = anything_mcp
+mcp_server: Any = anything_mcp
 
 transport_security = getattr(getattr(mcp_server, "settings", None), "transport_security", None)
 if transport_security is not None:
@@ -323,6 +326,22 @@ async def get_tool_definitions(force_refresh=False) -> list:
         _tool_defs_cache = []
     return _tool_defs_cache
 
+def serialize_tool_result(result: Any) -> list[dict[str, Any]]:
+    if isinstance(result, tuple):
+        result = result[0]
+    if isinstance(result, dict):
+        return [{"type": "text", "text": json.dumps(result)}]
+    if isinstance(result, (str, bytes)):
+        return [{"type": "text", "text": result.decode() if isinstance(result, bytes) else result}]
+    content: list[dict[str, Any]] = []
+    for item in result:
+        text = getattr(item, "text", None)
+        if text is not None:
+            content.append({"type": "text", "text": str(text)})
+        else:
+            content.append({"type": "other", "value": str(item)})
+    return content
+
 # ----------------------------------------------------------------------
 # Utility to fetch workspaces from AnythingLLM
 # ----------------------------------------------------------------------
@@ -330,7 +349,7 @@ def fetch_workspaces() -> list:
     url = f"{BASE_URL}/api/v1/workspaces"
     headers = {"Authorization": f"Bearer {API_KEY}"}
     try:
-        req = Request(url, headers=headers)
+        req = UrlRequest(url, headers=headers)
         with urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode())
             return data.get("workspaces", [])
@@ -360,7 +379,7 @@ async def app_lifespan(_app):
     print_endpoint_banner(PORT)
     yield
 
-app = FastAPI(title="MSIM MCP Server", version="1.0.6", lifespan=app_lifespan)
+app = FastAPI(title="MSIM MCP Server", version=VERSION, lifespan=app_lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
@@ -372,7 +391,7 @@ app.add_middleware(
 def require_gateway_auth(authorization: Optional[str] = Header(default=None)) -> None:
     if not MSIM_AUTH_TOKEN:
         raise HTTPException(status_code=503, detail="MSIM_AUTH_TOKEN is not configured")
-    if authorization != f"Bearer {MSIM_AUTH_TOKEN}":
+    if not secrets.compare_digest(authorization or "", f"Bearer {MSIM_AUTH_TOKEN}"):
         raise HTTPException(status_code=401, detail="Invalid or missing gateway token")
 
 # Shutdown event
@@ -400,7 +419,7 @@ def print_endpoint_banner(port: int, host: str = "127.0.0.1"):
 # JSON‑RPC endpoint (/mcp)
 # ----------------------------------------------------------------------
 @app.post("/mcp")
-async def mcp_endpoint(request: Request, _: None = Depends(require_gateway_auth)):
+async def mcp_endpoint(request: FastAPIRequest, _: None = Depends(require_gateway_auth)):
     if shutdown_event.is_set():
         return JSONResponse({"jsonrpc": "2.0", "error": {"code": -32000, "message": "Server is shutting down"}}, status_code=503)
     try:
@@ -438,7 +457,7 @@ async def mcp_endpoint(request: Request, _: None = Depends(require_gateway_auth)
                 "result": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {"tools": {}, "prompts": {}, "resources": {}},
-                    "serverInfo": {"name": "MSIM", "version": "1.0.6"}
+                    "serverInfo": {"name": "MSIM", "version": VERSION}
                 },
                 "id": request_id
             }
@@ -471,7 +490,7 @@ async def mcp_endpoint(request: Request, _: None = Depends(require_gateway_auth)
         if method == "tools/call":
             tool_name = params.get("name")
             raw_arguments = params.get("arguments", {})
-            if not isinstance(raw_arguments, dict):
+            if not isinstance(tool_name, str) or not isinstance(raw_arguments, dict):
                 return JSONResponse({
                     "jsonrpc": "2.0",
                     "error": {"code": -32602, "message": "Invalid tool arguments"},
@@ -507,18 +526,7 @@ async def mcp_endpoint(request: Request, _: None = Depends(require_gateway_auth)
 
             if hasattr(mcp_server, 'call_tool'):
                 result = await mcp_server.call_tool(tool_name, arguments)
-                # Convert result to JSON-serializable
-                if isinstance(result, tuple):
-                    result = result[0]
-                if isinstance(result, dict):
-                    content_list = [{"type": "text", "text": json.dumps(result)}]
-                else:
-                    content_list = []
-                    for item in result:
-                        if hasattr(item, 'text'):
-                            content_list.append({"type": "text", "text": item.text})
-                        else:
-                            content_list.append({"type": "other", "value": str(item)})
+                content_list = serialize_tool_result(result)
                 response_data = {"content": content_list}
                 response = {
                     "jsonrpc": "2.0",
@@ -531,7 +539,9 @@ async def mcp_endpoint(request: Request, _: None = Depends(require_gateway_auth)
                 if hasattr(mcp_server, tool_name):
                     func = getattr(mcp_server, tool_name)
                     if callable(func):
-                        result = await func(**arguments)
+                        result = func(**arguments)
+                        if inspect.isawaitable(result):
+                            result = await result
                         if isinstance(result, (str, int, float, bool, list, dict)):
                             response = {
                                 "jsonrpc": "2.0",
@@ -630,7 +640,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     "result": {
                         "protocolVersion": "2024-11-05",
                         "capabilities": {"tools": {}, "prompts": {}, "resources": {}},
-                        "serverInfo": {"name": "MSIM", "version": "1.0.6"},
+                        "serverInfo": {"name": "MSIM", "version": VERSION},
                     },
                     "id": request_id,
                 })
@@ -645,7 +655,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 tool_name = params.get("name")
                 arguments = params.get("arguments", {})
                 tools = await get_tool_definitions()
-                if not isinstance(arguments, dict) or not any(tool["name"] == tool_name for tool in tools):
+                if not isinstance(tool_name, str) or not isinstance(arguments, dict) or not any(tool["name"] == tool_name for tool in tools):
                     await websocket.send_json({
                         "jsonrpc": "2.0",
                         "error": {"code": -32602, "message": "Invalid tool name or arguments"},
@@ -676,12 +686,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         "id": request_id,
                     })
                     continue
-                result_items = result[0] if isinstance(result, tuple) else result
-                content = [
-                    {"type": "text", "text": item.text} if hasattr(item, "text")
-                    else {"type": "other", "value": str(item)}
-                    for item in result_items
-                ]
+                content = serialize_tool_result(result)
                 await websocket.send_json({
                     "jsonrpc": "2.0",
                     "result": {"content": content},
@@ -708,7 +713,7 @@ async def list_tools(_: None = Depends(require_gateway_auth)):
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy", "workspace": default_workspace, "version": "1.0.6"}
+    return {"status": "healthy", "workspace": default_workspace, "version": VERSION}
 
 if hasattr(mcp_server, "sse_app"):
     app.mount("/", GatewayAuthMiddleware(mcp_server.sse_app()))
@@ -729,7 +734,7 @@ async def shutdown_cleanup():
 # ----------------------------------------------------------------------
 # Foreground server runner with supervisor mode
 # ----------------------------------------------------------------------
-def serve_foreground(port: int, ssl: bool = False, ssl_key: str = None, ssl_cert: str = None, supervise: bool = False):
+def serve_foreground(port: int, ssl: bool = False, ssl_key: Optional[str] = None, ssl_cert: Optional[str] = None, supervise: bool = False):
     if supervise:
         # Supervisor mode: run in a loop
         restart_count = 0

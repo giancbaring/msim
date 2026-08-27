@@ -74,7 +74,7 @@ def test_health_is_public() -> None:
     assert response.json() == {
         "status": "healthy",
         "workspace": "test-workspace",
-        "version": "1.0.6",
+        "version": "1.0.7",
     }
 
 
@@ -165,6 +165,35 @@ def test_invalid_json_rpc_request_is_rejected() -> None:
 
     assert response.status_code == 400
     assert response.json()["error"]["code"] == -32600
+
+
+def test_invalid_tool_name_is_rejected() -> None:
+    response = request(
+        "POST",
+        "/mcp",
+        headers=AUTH_HEADERS,
+        json={
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "tools/call",
+            "params": {"name": None, "arguments": {}},
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == -32602
+
+
+def test_tool_result_serialization_handles_text_and_strings() -> None:
+    class TextResult:
+        text = "hello"
+
+    assert MSIM.serialize_tool_result([TextResult()]) == [
+        {"type": "text", "text": "hello"},
+    ]
+    assert MSIM.serialize_tool_result("hello") == [
+        {"type": "text", "text": "hello"},
+    ]
 
 
 def test_websocket_supports_initialize() -> None:

@@ -23,6 +23,7 @@ services:
 		environment:
 			- ANYTHINGLLM_BASE_URL=http://anythingllm:3001
 			- ANYTHINGLLM_API_KEY=${ANYTHINGLLM_API_KEY:-}
+			- MSIM_AUTH_TOKEN=${MSIM_AUTH_TOKEN:?Set MSIM_AUTH_TOKEN in .env}
 			- WORKSPACE=${WORKSPACE:-}
 			- PORT=8000
 			- MSIM_HOST=0.0.0.0

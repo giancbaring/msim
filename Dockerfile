@@ -7,8 +7,7 @@ COPY MSIM.py ./
 COPY submodules/anythingllm-mcp ./submodules/anythingllm-mcp
 
 RUN pip install --no-cache-dir uv \
-    && uv sync --frozen \
-    && uv pip install ./submodules/anythingllm-mcp
+    && uv sync --locked
 
 EXPOSE 8000
 

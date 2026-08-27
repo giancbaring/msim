@@ -2,21 +2,19 @@
 set -e
 
 echo "============================================================"
-echo "  MSIM Installer v1.0.3"
+echo "  MSIM Installer v1.0.7"
 echo "============================================================"
 
 # Step 1: Ensure submodule is present
 echo "Step 1: Ensuring submodule is present..."
 if [ ! -f "submodules/anythingllm-mcp/pyproject.toml" ]; then
     echo "Submodule not found. Pulling..."
-    git submodule update --init --recursive || {
-        echo "Submodule pull failed. Cloning manually..."
-        rm -rf submodules/anythingllm-mcp
-        git clone https://github.com/andreperez/anythingllm-mcp.git submodules/anythingllm-mcp
-    }
+    if ! git submodule update --init --recursive; then
+        echo "ERROR: Submodule pull failed. Check Git access and try again."
+        exit 1
+    fi
     if [ ! -f "submodules/anythingllm-mcp/pyproject.toml" ]; then
-        echo "ERROR: Submodule still missing. Please run manually:"
-        echo "  git clone https://github.com/andreperez/anythingllm-mcp.git submodules/anythingllm-mcp"
+        echo "ERROR: Submodule is still missing."
         exit 1
     fi
 else
@@ -28,10 +26,9 @@ echo "Step 2: Checking uv..."
 if ! command -v uv &> /dev/null; then
     echo "uv not found. Installing..."
     curl -LsSf https://astral.sh/uv/install.sh | sh
-    export PATH="$HOME/.cargo/bin:$PATH"
+    export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
     if ! command -v uv &> /dev/null; then
-        echo "ERROR: Failed to install uv. Please install manually:"
-        echo "  curl -LsSf https://astral.sh/uv/install.sh | sh"
+        echo "ERROR: Failed to install uv. Please install it manually."
         exit 1
     fi
 fi
@@ -44,25 +41,17 @@ fi
 
 # Step 4: Install Python dependencies
 echo "Step 4: Installing Python dependencies..."
-uv sync
+uv sync --locked
 
-# Step 5: Install the wrapper manually (using uv pip)
-echo "Step 5: Installing AnythingLLM wrapper..."
-uv pip install ./submodules/anythingllm-mcp/
+# Step 5: Validate MSIM.py using uv run
+echo "Step 5: Validating MSIM.py..."
+if ! uv run python -m py_compile MSIM.py; then
+    echo "ERROR: MSIM.py failed compilation. Check the local source manually."
+    exit 1
+fi
 
-# Step 6: Validate MSIM.py using uv run
-echo "Step 6: Validating MSIM.py..."
-uv run python -m py_compile MSIM.py || {
-    echo "MSIM.py appears corrupted. Downloading fresh copy..."
-    curl -o MSIM.py https://raw.githubusercontent.com/giancbaring/msim/main/MSIM.py
-    uv run python -m py_compile MSIM.py || {
-        echo "ERROR: MSIM.py still invalid. Please check manually."
-        exit 1
-    }
-}
-
-# Step 7: Run interactive setup using uv run
-echo "Step 7: Running interactive setup..."
+# Step 6: Run interactive setup using uv run
+echo "Step 6: Running interactive setup..."
 uv run python MSIM.py
 
 echo "Installation complete."

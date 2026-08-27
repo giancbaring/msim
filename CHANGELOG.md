@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.7
+
+- Fixed the workspace connection request type collision in the gateway.
+- Added explicit tool-name validation and robust MCP result serialization.
+- Centralized runtime version reporting and hardened gateway token comparison.
+- Made Docker and installer dependency installation locked and source-preserving.
+- Required `MSIM_AUTH_TOKEN` for the Docker MSIM service.
+
+The `submodules/anythingllm-mcp` project remains separately maintained, licensed, and attributed.
+
 ## 1.0.6
 
 - Hardened the gateway with bearer authentication, explicit CORS, host allowlists, and safer input validation.

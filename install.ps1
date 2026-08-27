@@ -1,6 +1,6 @@
 # PowerShell install script for Windows
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  MSIM Installer v1.0.3" -ForegroundColor Cyan
+Write-Host "  MSIM Installer v1.0.7" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 # Step 1: Ensure submodule is present
@@ -45,27 +45,18 @@ if (Test-Path ".venv") {
 
 # Step 4: Install Python dependencies
 Write-Host "Step 4: Installing Python dependencies..." -ForegroundColor Cyan
-uv sync
+uv sync --locked
 
-# Step 5: Install the wrapper manually (using uv pip)
-Write-Host "Step 5: Installing AnythingLLM wrapper..." -ForegroundColor Cyan
-uv pip install ./submodules/anythingllm-mcp/
-
-# Step 6: Validate MSIM.py using uv run
-Write-Host "Step 6: Validating MSIM.py..." -ForegroundColor Cyan
+# Step 5: Validate MSIM.py using uv run
+Write-Host "Step 5: Validating MSIM.py..." -ForegroundColor Cyan
 uv run python -m py_compile MSIM.py
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "MSIM.py appears corrupted. Downloading fresh copy..." -ForegroundColor Yellow
-    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/giancbaring/msim/main/MSIM.py" -OutFile "MSIM.py"
-    uv run python -m py_compile MSIM.py
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "ERROR: MSIM.py still invalid. Please check manually." -ForegroundColor Red
-        exit 1
-    }
+    Write-Host "ERROR: MSIM.py failed compilation. Check the local source manually." -ForegroundColor Red
+    exit 1
 }
 
-# Step 7: Run interactive setup using uv run
-Write-Host "Step 7: Running interactive setup..." -ForegroundColor Cyan
+# Step 6: Run interactive setup using uv run
+Write-Host "Step 6: Running interactive setup..." -ForegroundColor Cyan
 uv run python MSIM.py
 
 Write-Host "Installation complete." -ForegroundColor Green
