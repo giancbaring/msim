@@ -1,0 +1,3 @@
+# This is a minimal lock file; uv sync will regenerate it.
+
+# We include it to ensure reproducible installs.

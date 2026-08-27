@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+anythingllm:
+image: mintplex/anythingllm:latest
+container_name: anythingllm
+ports:
+
+- "3001:3001"
+volumes:
+- anythingllm_data:/app/server/storage
+environment:
+- STORAGE_DIR=/app/server/storage
+- JWT_SECRET=change_this_secret
+restart: unless-stopped
+
+msim:
+build: .
+container_name: msim
+ports:
+
+- "8000:8000"
+depends_on:
+- anythingllm
+environment:
+- ANYTHINGLLM_BASE_URL=[http://anythingllm:3001](http://anythingllm:3001)
+
+# The API key must be set via .env or environment variable
+
+- ANYTHINGLLM_API_KEY=${ANYTHINGLLM_API_KEY:-}
+- WORKSPACE=${WORKSPACE:-}
+- PORT=8000
+- LOG_LEVEL=info
+volumes:
+- ./msim_config:/app/config
+restart: unless-stopped
+
+volumes:
+anythingllm_data:
