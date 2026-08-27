@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 MSIM – MCP Server Integration Manager
-Version: 1.0.8
+Version: 1.0.9
 """
 import sys
 import os
@@ -21,7 +21,7 @@ from urllib.request import Request as UrlRequest, urlopen
 from urllib.error import URLError
 import getpass
 
-VERSION = "1.0.8"
+VERSION = "1.0.9"
 
 # ----------------------------------------------------------------------
 # Dependency Check

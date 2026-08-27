@@ -74,7 +74,7 @@ def test_health_is_public() -> None:
     assert response.json() == {
         "status": "healthy",
         "workspace": "test-workspace",
-        "version": "1.0.8",
+        "version": "1.0.9",
     }
 
 

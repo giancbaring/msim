@@ -1,6 +1,6 @@
 [project]
 name = "msim"
-version = "1.0.8"
+version = "1.0.9"
 description = "MCP Server Integration Manager for AnythingLLM"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -33,4 +33,5 @@ build-backend = "setuptools.build_meta"
 dev = [
 	"cryptography>=42.0.0",
 	"pytest>=8.0.0",
+	"respx>=0.21.0",
 ]

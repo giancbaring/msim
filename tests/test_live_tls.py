@@ -86,7 +86,7 @@ def test_live_https_and_wss(tmp_path, monkeypatch) -> None:
         with httpx.Client(verify=False, trust_env=False) as client:
             response = client.get(f"https://localhost:{port}/health")
         assert response.status_code == 200
-        assert response.json()["version"] == "1.0.8"
+        assert response.json()["version"] == "1.0.9"
 
         async def check_wss() -> dict:
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)

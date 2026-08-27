@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.9
+
+- Added the `respx` test dependency required by the upstream HTTP-mocking tests in CI.
+- Corrected the release test environment so every supported Python matrix job can collect the full suite.
+
+The `submodules/anythingllm-mcp` project remains separately maintained, licensed, and attributed.
+
 ## 1.0.8
 
 - Made the live HTTPS test independent of ambient proxy settings in CI.
