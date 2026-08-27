@@ -2,18 +2,22 @@
 set -e
 
 echo "============================================================"
-echo "  MSIM Installer v1.0.1"
+echo "  MSIM Installer v1.0.2"
 echo "============================================================"
 
-# Step 1: Pull submodule if needed
+# Step 1: Ensure submodule is present
 
 echo "Step 1: Ensuring submodule is present..."
 if [ ! -f "submodules/anythingllm-mcp/pyproject.toml" ]; then
 echo "Submodule not found. Pulling..."
-git submodule update --init --recursive
+git submodule update --init --recursive || {
+echo "Submodule pull failed. Cloning manually..."
+rm -rf submodules/anythingllm-mcp
+git clone [https://github.com/andreperez/anythingllm-mcp.git](https://github.com/andreperez/anythingllm-mcp.git) submodules/anythingllm-mcp
+}
 if [ ! -f "submodules/anythingllm-mcp/pyproject.toml" ]; then
 echo "ERROR: Submodule still missing. Please run manually:"
-echo "  git submodule update --init --recursive"
+echo "  git clone [https://github.com/andreperez/anythingllm-mcp.git](https://github.com/andreperez/anythingllm-mcp.git) submodules/anythingllm-mcp"
 exit 1
 fi
 else
@@ -34,14 +38,19 @@ exit 1
 fi
 fi
 
-# Step 3: Install Python dependencies
+# Step 3: Install the wrapper manually (pip install)
 
-echo "Step 3: Installing Python dependencies..."
+echo "Step 3: Installing AnythingLLM wrapper..."
+pip install ./submodules/anythingllm-mcp/
+
+# Step 4: Install remaining Python dependencies
+
+echo "Step 4: Installing remaining dependencies..."
 uv sync
 
-# Step 4: Validate MSIM.py
+# Step 5: Validate MSIM.py
 
-echo "Step 4: Validating MSIM.py..."
+echo "Step 5: Validating MSIM.py..."
 python -m py_compile MSIM.py || {
 echo "MSIM.py appears corrupted. Downloading fresh copy..."
 curl -o MSIM.py [https://raw.githubusercontent.com/giancbaring/msim/main/MSIM.py](https://raw.githubusercontent.com/giancbaring/msim/main/MSIM.py)
@@ -51,9 +60,9 @@ exit 1
 }
 }
 
-# Step 5: Run interactive setup
+# Step 6: Run interactive setup
 
-echo "Step 5: Running interactive setup..."
+echo "Step 6: Running interactive setup..."
 python MSIM.py
 
 echo "Installation complete."

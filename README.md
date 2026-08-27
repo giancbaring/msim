@@ -73,14 +73,13 @@ python MSIM.py uninstall # remove service
 
 ### Endpoints
 
-| Endpoint ↕▾ | Transport ↕▾ | Description ↕▾ |
+| Endpoint | Transport | Description |
 |---|---|---|
-| −`POST /mcp` | HTTP | MCP JSON‑RPC (main) |
-| −`GET /sse` | SSE | Server‑Sent Events |
-| −`WS /ws` | WebSocket | WebSocket |
-| −`GET /tools` | HTTP | Debug – list available tools |
-| −`GET /health` | HTTP | Health check |
-⚙
+| `POST /mcp` | HTTP | MCP JSON‑RPC (main) |
+| `GET /sse` | SSE | Server‑Sent Events |
+| `WS /ws` | WebSocket | WebSocket |
+| `GET /tools` | HTTP | Debug – list available tools |
+| `GET /health` | HTTP | Health check |
 
 ---
 

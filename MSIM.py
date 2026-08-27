@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 MSIM – MCP Server Integration Manager
-Version: 1.0.1
+Version: 1.0.2
 """
 import sys
 import os
@@ -358,7 +358,7 @@ default_workspace = get_default_workspace()
 
 # ----------------------------------------------------------------------
 
-app = FastAPI(title="MSIM MCP Server", version="1.0.1")
+app = FastAPI(title="MSIM MCP Server", version="1.0.2")
 app.add_middleware(
 CORSMiddleware,
 allow_origins=["*"],
@@ -440,7 +440,7 @@ response = {
 "result": {
 "protocolVersion": "2024-11-05",
 "capabilities": {"tools": {}, "prompts": {}, "resources": {}},
-"serverInfo": {"name": "MSIM", "version": "1.0.1"}
+"serverInfo": {"name": "MSIM", "version": "1.0.2"}
 },
 "id": request_id
 }
@@ -613,7 +613,7 @@ return {"tools": tools, "count": len(tools)}
 
 @app.get("/health")
 async def health():
-return {"status": "healthy", "workspace": default_workspace, "version": "1.0.1"}
+return {"status": "healthy", "workspace": default_workspace, "version": "1.0.2"}
 
 # ----------------------------------------------------------------------
 
