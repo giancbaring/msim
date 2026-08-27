@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 MSIM – MCP Server Integration Manager
-Version: 1.0.5
+Version: 1.0.6
 """
 import sys
 import os
@@ -360,7 +360,7 @@ async def app_lifespan(_app):
     print_endpoint_banner(PORT)
     yield
 
-app = FastAPI(title="MSIM MCP Server", version="1.0.5", lifespan=app_lifespan)
+app = FastAPI(title="MSIM MCP Server", version="1.0.6", lifespan=app_lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
@@ -438,7 +438,7 @@ async def mcp_endpoint(request: Request, _: None = Depends(require_gateway_auth)
                 "result": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {"tools": {}, "prompts": {}, "resources": {}},
-                    "serverInfo": {"name": "MSIM", "version": "1.0.5"}
+                    "serverInfo": {"name": "MSIM", "version": "1.0.6"}
                 },
                 "id": request_id
             }
@@ -630,7 +630,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     "result": {
                         "protocolVersion": "2024-11-05",
                         "capabilities": {"tools": {}, "prompts": {}, "resources": {}},
-                        "serverInfo": {"name": "MSIM", "version": "1.0.5"},
+                        "serverInfo": {"name": "MSIM", "version": "1.0.6"},
                     },
                     "id": request_id,
                 })
@@ -708,7 +708,7 @@ async def list_tools(_: None = Depends(require_gateway_auth)):
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy", "workspace": default_workspace, "version": "1.0.5"}
+    return {"status": "healthy", "workspace": default_workspace, "version": "1.0.6"}
 
 if hasattr(mcp_server, "sse_app"):
     app.mount("/", GatewayAuthMiddleware(mcp_server.sse_app()))
