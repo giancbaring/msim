@@ -24,9 +24,6 @@ depends_on:
 - anythingllm
 environment:
 - ANYTHINGLLM_BASE_URL=[http://anythingllm:3001](http://anythingllm:3001)
-
-# The API key must be set via .env or environment variable
-
 - ANYTHINGLLM_API_KEY=${ANYTHINGLLM_API_KEY:-}
 - WORKSPACE=${WORKSPACE:-}
 - PORT=8000

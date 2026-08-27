@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 MSIM – MCP Server Integration Manager
-Version: 1.0.0
+Version: 1.0.1
 """
 import sys
 import os
@@ -279,6 +279,9 @@ return True
 submodule_path = Path(**file**).parent / "submodules" / "anythingllm-mcp"
 if submodule_path.exists():
 sys.path.insert(0, str(submodule_path))
+else:
+logger.error("Submodule 'submodules/anythingllm-mcp' not found. Please run: git submodule update --init --recursive")
+sys.exit(1)
 
 try:
 from anythingllm_mcp.server import mcp as anything_mcp
@@ -355,7 +358,7 @@ default_workspace = get_default_workspace()
 
 # ----------------------------------------------------------------------
 
-app = FastAPI(title="MSIM MCP Server", version="1.0.0")
+app = FastAPI(title="MSIM MCP Server", version="1.0.1")
 app.add_middleware(
 CORSMiddleware,
 allow_origins=["*"],
@@ -437,7 +440,7 @@ response = {
 "result": {
 "protocolVersion": "2024-11-05",
 "capabilities": {"tools": {}, "prompts": {}, "resources": {}},
-"serverInfo": {"name": "MSIM", "version": "1.0.0"}
+"serverInfo": {"name": "MSIM", "version": "1.0.1"}
 },
 "id": request_id
 }
@@ -610,7 +613,7 @@ return {"tools": tools, "count": len(tools)}
 
 @app.get("/health")
 async def health():
-return {"status": "healthy", "workspace": default_workspace, "version": "1.0.0"}
+return {"status": "healthy", "workspace": default_workspace, "version": "1.0.1"}
 
 # ----------------------------------------------------------------------
 
