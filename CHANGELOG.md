@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.8
+
+- Made the live HTTPS test independent of ambient proxy settings in CI.
+- Kept local loopback integration traffic on the local test server.
+
+The `submodules/anythingllm-mcp` project remains separately maintained, licensed, and attributed.
+
 ## 1.0.7
 
 - Fixed the workspace connection request type collision in the gateway.

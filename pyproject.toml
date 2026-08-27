@@ -1,6 +1,6 @@
 [project]
 name = "msim"
-version = "1.0.7"
+version = "1.0.8"
 description = "MCP Server Integration Manager for AnythingLLM"
 readme = "README.md"
 requires-python = ">=3.10"
