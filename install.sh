@@ -2,7 +2,7 @@
 set -e
 
 echo "============================================================"
-echo "  MSIM Installer v1.0.7"
+echo "  MSIM Installer v1.0.10"
 echo "============================================================"
 
 # Step 1: Ensure submodule is present
@@ -33,24 +33,28 @@ if ! command -v uv &> /dev/null; then
     fi
 fi
 
-# Step 3: Remove old virtual environment (if present)
+# Step 3: Install Python 3.12 through uv
+echo "Step 3: Installing Python 3.12..."
+uv python install 3.12
+
+# Step 4: Remove old virtual environment (if present)
 if [ -d ".venv" ]; then
     echo "Removing old virtual environment..."
     rm -rf .venv
 fi
 
-# Step 4: Install Python dependencies
+# Step 5: Install Python dependencies
 echo "Step 4: Installing Python dependencies..."
-uv sync --locked
+uv sync --locked --python 3.12
 
-# Step 5: Validate MSIM.py using uv run
+# Step 6: Validate MSIM.py using uv run
 echo "Step 5: Validating MSIM.py..."
 if ! uv run python -m py_compile MSIM.py; then
     echo "ERROR: MSIM.py failed compilation. Check the local source manually."
     exit 1
 fi
 
-# Step 6: Run interactive setup using uv run
+# Step 7: Run interactive setup using uv run
 echo "Step 6: Running interactive setup..."
 uv run python MSIM.py
 

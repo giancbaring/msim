@@ -1,6 +1,6 @@
 [project]
 name = "msim"
-version = "1.0.9"
+version = "1.0.10"
 description = "MCP Server Integration Manager for AnythingLLM"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -35,3 +35,6 @@ dev = [
 	"pytest>=8.0.0",
 	"respx>=0.21.0",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = [".", "submodules/anythingllm-mcp"]

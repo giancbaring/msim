@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 MSIM – MCP Server Integration Manager
-Version: 1.0.9
+Version: 1.0.10
 """
 import sys
 import os
@@ -12,7 +12,6 @@ import argparse
 import logging
 import asyncio
 import signal
-import secrets
 import inspect
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -21,14 +20,14 @@ from urllib.request import Request as UrlRequest, urlopen
 from urllib.error import URLError
 import getpass
 
-VERSION = "1.0.9"
+VERSION = "1.0.10"
 
 # ----------------------------------------------------------------------
 # Dependency Check
 # ----------------------------------------------------------------------
 try:
     import uvicorn
-    from fastapi import FastAPI, Depends, Header, HTTPException, Request as FastAPIRequest, WebSocket, WebSocketDisconnect
+    from fastapi import FastAPI, Request as FastAPIRequest, WebSocket, WebSocketDisconnect
     from fastapi.responses import JSONResponse
     from fastapi.middleware.cors import CORSMiddleware
     from dotenv import load_dotenv
@@ -110,11 +109,6 @@ def interactive_setup():
         print("ERROR: API Key is required.")
         sys.exit(1)
 
-    auth_token = getpass.getpass("MSIM gateway token: ").strip()
-    if not auth_token:
-        print("ERROR: MSIM gateway token is required.")
-        sys.exit(1)
-
     # Workspace (optional)
     workspace = input("Default Workspace (leave blank to auto-detect): ").strip()
 
@@ -152,7 +146,6 @@ def interactive_setup():
     env_content = f"""# MSIM Configuration
 ANYTHINGLLM_BASE_URL={base_url}
 ANYTHINGLLM_API_KEY={api_key}
-MSIM_AUTH_TOKEN={auth_token}
 WORKSPACE={workspace}
 PORT={DEFAULT_PORT}
 LOG_LEVEL=info
@@ -179,7 +172,6 @@ load_config()
 # Re-read after potential interactive setup
 BASE_URL = os.getenv("ANYTHINGLLM_BASE_URL", DEFAULT_BASE_URL)
 API_KEY = os.getenv("ANYTHINGLLM_API_KEY", "")
-MSIM_AUTH_TOKEN = os.getenv("MSIM_AUTH_TOKEN", "")
 WORKSPACE = os.getenv("WORKSPACE", "")
 PORT = int(os.getenv("PORT", DEFAULT_PORT))
 SERVER_HOST = os.getenv("MSIM_HOST", "127.0.0.1")
@@ -388,12 +380,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def require_gateway_auth(authorization: Optional[str] = Header(default=None)) -> None:
-    if not MSIM_AUTH_TOKEN:
-        raise HTTPException(status_code=503, detail="MSIM_AUTH_TOKEN is not configured")
-    if not secrets.compare_digest(authorization or "", f"Bearer {MSIM_AUTH_TOKEN}"):
-        raise HTTPException(status_code=401, detail="Invalid or missing gateway token")
-
 # Shutdown event
 shutdown_event = asyncio.Event()
 
@@ -419,7 +405,7 @@ def print_endpoint_banner(port: int, host: str = "127.0.0.1"):
 # JSON‑RPC endpoint (/mcp)
 # ----------------------------------------------------------------------
 @app.post("/mcp")
-async def mcp_endpoint(request: FastAPIRequest, _: None = Depends(require_gateway_auth)):
+async def mcp_endpoint(request: FastAPIRequest):
     if shutdown_event.is_set():
         return JSONResponse({"jsonrpc": "2.0", "error": {"code": -32000, "message": "Server is shutting down"}}, status_code=503)
     try:
@@ -578,38 +564,11 @@ async def mcp_endpoint(request: FastAPIRequest, _: None = Depends(require_gatewa
             "error": {"code": -32000, "message": str(e)}
         }, status_code=500)
 
-class GatewayAuthMiddleware:
-    def __init__(self, wrapped_app):
-        self.wrapped_app = wrapped_app
-
-    async def __call__(self, scope, receive, send):
-        headers = dict(scope.get("headers", []))
-        authorization = headers.get(b"authorization", b"").decode("latin-1")
-        if not MSIM_AUTH_TOKEN:
-            response = JSONResponse(
-                {"detail": "MSIM_AUTH_TOKEN is not configured"}, status_code=503
-            )
-            await response(scope, receive, send)
-            return
-        if not secrets.compare_digest(authorization, f"Bearer {MSIM_AUTH_TOKEN}"):
-            response = JSONResponse(
-                {"detail": "Invalid or missing gateway token"}, status_code=401
-            )
-            await response(scope, receive, send)
-            return
-        await self.wrapped_app(scope, receive, send)
-
-
 # ----------------------------------------------------------------------
 # WebSocket endpoint (/ws)
 # ----------------------------------------------------------------------
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    if not MSIM_AUTH_TOKEN or not secrets.compare_digest(
-        websocket.headers.get("authorization", ""), f"Bearer {MSIM_AUTH_TOKEN}"
-    ):
-        await websocket.close(code=1008, reason="Invalid or missing gateway token")
-        return
     await websocket.accept()
     try:
         while True:
@@ -707,7 +666,7 @@ async def websocket_endpoint(websocket: WebSocket):
 # Debug endpoints
 # ----------------------------------------------------------------------
 @app.get("/tools")
-async def list_tools(_: None = Depends(require_gateway_auth)):
+async def list_tools():
     tools = await get_tool_definitions()
     return {"tools": tools, "count": len(tools)}
 
@@ -716,7 +675,7 @@ async def health():
     return {"status": "healthy", "workspace": default_workspace, "version": VERSION}
 
 if hasattr(mcp_server, "sse_app"):
-    app.mount("/", GatewayAuthMiddleware(mcp_server.sse_app()))
+    app.mount("/", mcp_server.sse_app())
 
 # ----------------------------------------------------------------------
 # Graceful Shutdown

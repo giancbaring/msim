@@ -40,10 +40,11 @@ git submodule update --init --recursive
 The installer will:
 
 1. Install `uv` (if missing).
-2. Remove old virtual environment.
-3. Install all Python dependencies (including the wrapper).
-4. Validate the code.
-5. Run the interactive setup (asks for API key, base URL, workspace).
+2. Install Python 3.12 through `uv` (if missing).
+3. Remove old virtual environment.
+4. Install all Python dependencies (including the wrapper).
+5. Validate the code.
+6. Run the interactive setup (asks for API key, base URL, workspace).
 
 ### Docker Install (recommended for simplicity)
 
@@ -93,7 +94,6 @@ Key variables:
 
 - `ANYTHINGLLM_BASE_URL` – default `http://localhost:3001`
 - `ANYTHINGLLM_API_KEY` – your Developer API Key
-- `MSIM_AUTH_TOKEN` – bearer token required by MSIM tool and transport endpoints
 - `CORS_ORIGINS` – comma-separated browser origins allowed to access MSIM
 - `WORKSPACE` – default workspace slug (auto‑detected if blank)
 - `PORT` – server port (default 8000)
@@ -108,7 +108,7 @@ Key variables:
 
 Feel free to open issues or pull requests on GitHub.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) for MSIM contribution and security policies. The upstream `anythingllm-mcp` submodule has separate policies and attribution.
+See [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), and [SECURITY.md](SECURITY.md) for MSIM contribution, community, and security policies. The upstream `anythingllm-mcp` submodule has separate policies and attribution.
 
 ---
 

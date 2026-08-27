@@ -1,6 +1,6 @@
 # PowerShell install script for Windows
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  MSIM Installer v1.0.7" -ForegroundColor Cyan
+Write-Host "  MSIM Installer v1.0.10" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 # Step 1: Ensure submodule is present
@@ -37,17 +37,25 @@ if (-not $uv) {
     }
 }
 
-# Step 3: Remove old virtual environment (if present)
+# Step 3: Install Python 3.12 through uv
+Write-Host "Step 3: Installing Python 3.12..." -ForegroundColor Cyan
+uv python install 3.12
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERROR: Failed to install Python 3.12." -ForegroundColor Red
+    exit 1
+}
+
+# Step 4: Remove old virtual environment (if present)
 if (Test-Path ".venv") {
     Write-Host "Removing old virtual environment..." -ForegroundColor Yellow
     rm -r .venv -Force
 }
 
-# Step 4: Install Python dependencies
+# Step 5: Install Python dependencies
 Write-Host "Step 4: Installing Python dependencies..." -ForegroundColor Cyan
-uv sync --locked
+uv sync --locked --python 3.12
 
-# Step 5: Validate MSIM.py using uv run
+# Step 6: Validate MSIM.py using uv run
 Write-Host "Step 5: Validating MSIM.py..." -ForegroundColor Cyan
 uv run python -m py_compile MSIM.py
 if ($LASTEXITCODE -ne 0) {
@@ -55,7 +63,7 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# Step 6: Run interactive setup using uv run
+# Step 7: Run interactive setup using uv run
 Write-Host "Step 6: Running interactive setup..." -ForegroundColor Cyan
 uv run python MSIM.py
 

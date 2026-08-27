@@ -19,7 +19,6 @@ from cryptography.x509.oid import NameOID
 from websockets.asyncio.client import connect
 
 os.environ.setdefault("ANYTHINGLLM_API_KEY", "test-anythingllm-key")
-os.environ.setdefault("MSIM_AUTH_TOKEN", "test-msim-token")
 os.environ.setdefault("WORKSPACE", "test-workspace")
 os.environ.setdefault("MSIM_NONINTERACTIVE", "true")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -86,7 +85,7 @@ def test_live_https_and_wss(tmp_path, monkeypatch) -> None:
         with httpx.Client(verify=False, trust_env=False) as client:
             response = client.get(f"https://localhost:{port}/health")
         assert response.status_code == 200
-        assert response.json()["version"] == "1.0.9"
+        assert response.json()["version"] == "1.0.10"
 
         async def check_wss() -> dict:
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
@@ -96,7 +95,6 @@ def test_live_https_and_wss(tmp_path, monkeypatch) -> None:
                 f"wss://localhost:{port}/ws",
                 ssl=context,
                 proxy=None,
-                additional_headers={"Authorization": "Bearer test-msim-token"},
             ) as websocket:
                 await websocket.send(json.dumps({
                     "jsonrpc": "2.0",

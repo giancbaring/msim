@@ -7,14 +7,10 @@ from pathlib import Path
 import httpx
 
 os.environ.setdefault("ANYTHINGLLM_API_KEY", "test-anythingllm-key")
-os.environ.setdefault("MSIM_AUTH_TOKEN", "test-msim-token")
 os.environ.setdefault("WORKSPACE", "test-workspace")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import MSIM
-
-
-AUTH_HEADERS = {"Authorization": "Bearer test-msim-token"}
 
 
 def request(method: str, path: str, **kwargs) -> httpx.Response:
@@ -74,20 +70,22 @@ def test_health_is_public() -> None:
     assert response.json() == {
         "status": "healthy",
         "workspace": "test-workspace",
-        "version": "1.0.9",
+        "version": "1.0.10",
     }
 
 
-def test_tools_requires_gateway_authentication() -> None:
+def test_tools_is_available_on_local_gateway() -> None:
     response = request("GET", "/tools")
 
-    assert response.status_code == 401
+    assert response.status_code == 200
 
 
-def test_sse_requires_gateway_authentication() -> None:
-    response = request("GET", "/sse")
-
-    assert response.status_code == 401
+def test_sse_route_is_registered() -> None:
+    sse_mount = next(route for route in MSIM.app.routes if hasattr(route, "app") and hasattr(route.app, "routes"))
+    assert any(
+        getattr(route, "path", None) == "/sse"
+        for route in getattr(sse_mount.app, "routes", [])
+    )
 
 
 def test_authenticated_sse_opens_mcp_session() -> None:
@@ -121,7 +119,6 @@ def test_authenticated_sse_opens_mcp_session() -> None:
             "query_string": b"",
             "headers": [
                 (b"host", b"testserver"),
-                (b"authorization", b"Bearer test-msim-token"),
             ],
             "client": ("testclient", 50000),
             "server": ("testserver", 80),
@@ -140,7 +137,6 @@ def test_initialize_returns_mcp_handshake() -> None:
     response = request(
         "POST",
         "/mcp",
-        headers=AUTH_HEADERS,
         json={
             "jsonrpc": "2.0",
             "id": 1,
@@ -159,7 +155,6 @@ def test_invalid_json_rpc_request_is_rejected() -> None:
     response = request(
         "POST",
         "/mcp",
-        headers=AUTH_HEADERS,
         json={"jsonrpc": "2.0", "id": 2, "params": {}},
     )
 
@@ -171,7 +166,6 @@ def test_invalid_tool_name_is_rejected() -> None:
     response = request(
         "POST",
         "/mcp",
-        headers=AUTH_HEADERS,
         json={
             "jsonrpc": "2.0",
             "id": 3,
@@ -199,7 +193,6 @@ def test_tool_result_serialization_handles_text_and_strings() -> None:
 def test_websocket_supports_initialize() -> None:
     responses, _ = websocket_request(
         {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
-        AUTH_HEADERS,
     )
     payload = responses[0]
 
@@ -212,21 +205,11 @@ def test_websocket_supports_tool_call() -> None:
             "id": 1,
             "method": "tools/call",
             "params": {"name": "anythingllm_check_auth", "arguments": {}},
-        }, AUTH_HEADERS)
+        })
     payload = responses[0]
 
     assert payload["result"]["content"][0]["type"] == "text"
     assert "Error:" in payload["result"]["content"][0]["text"]
-
-
-def test_websocket_rejects_missing_gateway_authentication() -> None:
-    _, outgoing = websocket_request({"jsonrpc": "2.0", "id": 1, "method": "initialize"})
-
-    assert outgoing[-1] == {
-        "type": "websocket.close",
-        "code": 1008,
-        "reason": "Invalid or missing gateway token",
-    }
 
 
 def test_https_server_passes_tls_configuration(tmp_path, monkeypatch) -> None:

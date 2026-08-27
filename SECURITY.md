@@ -14,8 +14,8 @@ Do not disclose credentials, API keys, tokens, private documents, or full reques
 
 ## Security Requirements
 
-- Keep `MSIM_AUTH_TOKEN` configured for all tool-bearing routes.
-- Keep MSIM bound to localhost unless network exposure is intentional and protected.
+- Keep MSIM bound to localhost. This release does not provide gateway authentication;
+	use network isolation or an authenticated reverse proxy before exposing MSIM.
 - Use explicit `CORS_ORIGINS` and `MCP_ALLOWED_HOSTS` values.
 - Keep local-file uploads disabled unless the deployment has an explicit policy and trusted users.
 - Never commit `.env`, API keys, certificates, private keys, logs, or captured prompts.

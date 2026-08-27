@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.10
+
+- Removed MSIM gateway-token authentication for local-hosted deployments.
+- Removed the Docker and installer dependency on `MSIM_AUTH_TOKEN`.
+- Updated transport tests to verify local unauthenticated access.
+
+Network-exposed deployments must use network isolation or an authenticated reverse proxy.
+
 ## 1.0.9
 
 - Added the `respx` test dependency required by the upstream HTTP-mocking tests in CI.
