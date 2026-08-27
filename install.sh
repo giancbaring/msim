@@ -50,23 +50,23 @@ uv sync
 echo "Step 5: Installing AnythingLLM wrapper..."
 uv pip install ./submodules/anythingllm-mcp/
 
-# Step 6: Validate MSIM.py
+# Step 6: Validate MSIM.py using uv run
 echo "Step 6: Validating MSIM.py..."
-python -m py_compile MSIM.py || {
+uv run python -m py_compile MSIM.py || {
     echo "MSIM.py appears corrupted. Downloading fresh copy..."
     curl -o MSIM.py https://raw.githubusercontent.com/giancbaring/msim/main/MSIM.py
-    python -m py_compile MSIM.py || {
+    uv run python -m py_compile MSIM.py || {
         echo "ERROR: MSIM.py still invalid. Please check manually."
         exit 1
     }
 }
 
-# Step 7: Run interactive setup
+# Step 7: Run interactive setup using uv run
 echo "Step 7: Running interactive setup..."
-python MSIM.py
+uv run python MSIM.py
 
 echo "Installation complete."
 echo "You can now run:"
-echo "  python MSIM.py menu      - interactive menu"
-echo "  python MSIM.py start     - start server in background"
-echo "  python MSIM.py serve     - start server in foreground"
+echo "  uv run python MSIM.py menu      - interactive menu"
+echo "  uv run python MSIM.py start     - start server in background"
+echo "  uv run python MSIM.py serve     - start server in foreground"

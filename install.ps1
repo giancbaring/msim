@@ -37,7 +37,7 @@ if (-not $uv) {
     }
 }
 
-# Step 3: Remove old virtual environment (if present) to avoid conflicts
+# Step 3: Remove old virtual environment (if present)
 if (Test-Path ".venv") {
     Write-Host "Removing old virtual environment..." -ForegroundColor Yellow
     rm -r .venv -Force
@@ -51,25 +51,25 @@ uv sync
 Write-Host "Step 5: Installing AnythingLLM wrapper..." -ForegroundColor Cyan
 uv pip install ./submodules/anythingllm-mcp/
 
-# Step 6: Validate MSIM.py
+# Step 6: Validate MSIM.py using uv run
 Write-Host "Step 6: Validating MSIM.py..." -ForegroundColor Cyan
-python -m py_compile MSIM.py
+uv run python -m py_compile MSIM.py
 if ($LASTEXITCODE -ne 0) {
     Write-Host "MSIM.py appears corrupted. Downloading fresh copy..." -ForegroundColor Yellow
     Invoke-WebRequest -Uri "https://raw.githubusercontent.com/giancbaring/msim/main/MSIM.py" -OutFile "MSIM.py"
-    python -m py_compile MSIM.py
+    uv run python -m py_compile MSIM.py
     if ($LASTEXITCODE -ne 0) {
         Write-Host "ERROR: MSIM.py still invalid. Please check manually." -ForegroundColor Red
         exit 1
     }
 }
 
-# Step 7: Run interactive setup
+# Step 7: Run interactive setup using uv run
 Write-Host "Step 7: Running interactive setup..." -ForegroundColor Cyan
-python MSIM.py
+uv run python MSIM.py
 
 Write-Host "Installation complete." -ForegroundColor Green
 Write-Host "You can now run:"
-Write-Host "  python MSIM.py menu      - interactive menu"
-Write-Host "  python MSIM.py start     - start server in background"
-Write-Host "  python MSIM.py serve     - start server in foreground"
+Write-Host "  uv run python MSIM.py menu      - interactive menu"
+Write-Host "  uv run python MSIM.py start     - start server in background"
+Write-Host "  uv run python MSIM.py serve     - start server in foreground"
